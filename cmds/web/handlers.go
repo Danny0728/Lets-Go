@@ -5,6 +5,7 @@ handler's are like controllers from MVC
 They are responsible for executing ur application logic and for writing HTTP response header and bodies*/
 import (
 	"fmt"
+	"github.com/yash/snippetbox/pkg/forms"
 	"github.com/yash/snippetbox/pkg/models"
 	"net/http"
 	"strconv"
@@ -45,20 +46,35 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) createSnippetForm(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Create a Snippet Form"))
+	app.render(w, r, "create.page.tmpl", &templateData{
+		//passed an empty forms object to the template
+		Form: forms.New(nil),
+	})
 }
 
 //add a createSnippet handler function
 func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
-	//creating some dummy builds we are going to delete this later
-	title := "hello"
-	content := "Hello is a nice word"
-	expires := "7"
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
 
-	id, err := app.snippets.Insert(title, content, expires)
+	form := forms.New(r.PostForm)
+	form.Required("title", "content", "expires")
+	form.MaxLength("title", 5)
+	form.PermittedValues("expires", "364", "7", "1")
+
+	if !form.Valid() {
+		app.render(w, r, "create.page.tmpl", &templateData{
+			Form: form,
+		})
+		return
+	}
+	id, err := app.snippets.Insert(form.Get("title"), form.Get("content"), form.Get("expires"))
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
-	http.Redirect(w, r, fmt.Sprintf("/snippet?id=%d \n", id), http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/snippet/%d", id), http.StatusSeeOther)
 }

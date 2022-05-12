@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/yash/snippetbox/pkg/forms"
 	"github.com/yash/snippetbox/pkg/models"
 	"html/template"
 	"path/filepath"
@@ -14,6 +15,7 @@ import (
 
 type templateData struct {
 	CurrentYear int
+	Form        *forms.Form
 	Snippet     *models.Snippet
 	Snippets    []*models.Snippet
 }

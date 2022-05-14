@@ -2,6 +2,7 @@ package main
 
 //to run both files simultaneously go run .
 import (
+	"crypto/tls"
 	"database/sql"
 	"flag"
 	"github.com/golangcollege/sessions"
@@ -45,6 +46,7 @@ func main() {
 	}
 	session := sessions.New([]byte(*secret))
 	session.Lifetime = 12 * time.Hour //session will expire after 12 hours
+	session.Secure = true
 
 	app := &application{
 		infoLog:       infoLog,
@@ -53,14 +55,35 @@ func main() {
 		snippets:      &postgres.SnippetModel{Pool: db},
 		templateCache: templateCache,
 	}
+
+	tlsConfig := &tls.Config{
+		PreferServerCipherSuites: true,
+		CurvePreferences:         []tls.CurveID{tls.X25519, tls.CurveP256},
+		/*
+			we can be specific about cipher suites we want but
+			NOTE : whenever u do this and PreferServerCipherSuites is set to true the order in list of CipherSuites matters
+			CipherSuites: []uint16{
+				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+				tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			},*/
+	}
 	srv := &http.Server{
-		Addr:     *addr,
-		ErrorLog: errorLog,
-		Handler:  app.routes(),
+		Addr:         *addr,
+		ErrorLog:     errorLog,
+		Handler:      app.routes(),
+		TLSConfig:    tlsConfig,
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 	//writing messages into the log using new loggers
 	infoLog.Printf("Starting server on :%s", *addr)
-	err = srv.ListenAndServe()
+	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
+
 	errorLog.Fatal(err)
 }
 

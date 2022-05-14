@@ -4,11 +4,13 @@ package main
 import (
 	"database/sql"
 	"flag"
+	"github.com/golangcollege/sessions"
 	"github.com/yash/snippetbox/pkg/models/postgres"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	_ "github.com/lib/pq"
 )
@@ -16,6 +18,7 @@ import (
 type application struct {
 	infoLog       *log.Logger
 	errorLog      *log.Logger
+	session       *sessions.Session
 	snippets      *postgres.SnippetModel
 	templateCache map[string]*template.Template
 }
@@ -24,10 +27,9 @@ func main() {
 
 	addr := flag.String("addr", ":4000", "HTTP Network Address")
 	dsn := flag.String("dsn", "user=dummy dbname=snippetbox password=pass sslmode=disable", "Postgres Datasource Name")
+	secret := flag.String("secret", "s6Nd%+pPbnzHbS*+9Pk8qGWhTzbpa@ge", "Secret key")
 	flag.Parse()
 
-	//question 1: log.New function is expected to have io.Writer type data or we can say something which has write method so that it can implement writer interface
-	// but here os.Stdout does not have a write method so cannot implement writer interface so how is this working or valid?
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
@@ -41,9 +43,13 @@ func main() {
 	if err != nil {
 		errorLog.Fatal(err)
 	}
+	session := sessions.New([]byte(*secret))
+	session.Lifetime = 12 * time.Hour //session will expire after 12 hours
+
 	app := &application{
 		infoLog:       infoLog,
 		errorLog:      errorLog,
+		session:       session,
 		snippets:      &postgres.SnippetModel{Pool: db},
 		templateCache: templateCache,
 	}
@@ -75,5 +81,5 @@ f, err:= os.OpenFile("./tmp/info.log", os.O_RDWR|os.O_CREATE|os.O_APPEND,0666)
 		log.Fatal(err)
 	}
 	defer f.Close()
-This can be used if u dont want to do logging at runtime
+This can be used if u don't want to do logging at runtime
 */

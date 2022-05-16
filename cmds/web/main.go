@@ -6,14 +6,13 @@ import (
 	"database/sql"
 	"flag"
 	"github.com/golangcollege/sessions"
+	_ "github.com/lib/pq"
 	"github.com/yash/snippetbox/pkg/models/postgres"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
 	"time"
-
-	_ "github.com/lib/pq"
 )
 
 type application struct {
@@ -21,6 +20,7 @@ type application struct {
 	errorLog      *log.Logger
 	session       *sessions.Session
 	snippets      *postgres.SnippetModel
+	users         *postgres.UserModel
 	templateCache map[string]*template.Template
 }
 
@@ -53,6 +53,7 @@ func main() {
 		errorLog:      errorLog,
 		session:       session,
 		snippets:      &postgres.SnippetModel{Pool: db},
+		users:         &postgres.UserModel{DB: db},
 		templateCache: templateCache,
 	}
 

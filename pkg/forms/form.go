@@ -3,6 +3,7 @@ package forms
 import (
 	"fmt"
 	"net/url"
+	"regexp"
 	"strings"
 	"unicode/utf8"
 )
@@ -12,17 +13,50 @@ type Form struct {
 	Errors errors
 }
 
+var EmailRX = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+
+func (f *Form) Minlength(field string, d int) {
+	value := f.Get(field)
+	if value == "" {
+		return
+	}
+	if utf8.RuneCountInString(value) < d {
+		f.Errors.Add(field, fmt.Sprintf("%s is too short (minimum is %d)", field, d))
+	}
+}
+
+// MatchesPattern as a alternative to regex this can also be used :)
+//func (f *Form) IsEmailValid(email string) {
+//	value := f.Get(email)
+//	_, err := mail.ParseAddress(value)
+//	if err != nil {
+//		f.Errors.Add(email, "Email address is Invalid")
+//		return
+//	}
+//	return
+//}
+func (f *Form) MatchesPattern(field string, pattern *regexp.Regexp) {
+	value := f.Get(field)
+	if value == "" {
+		return
+	}
+	if !pattern.MatchString(value) {
+		f.Errors.Add(field, "Email is Invalid")
+	}
+}
+
 func New(data url.Values) *Form {
 	return &Form{
 		data,
 		errors(map[string][]string{}),
 	}
 }
+
 func (f *Form) Required(fields ...string) {
 	for _, field := range fields {
 		value := f.Get(field)
 		if strings.TrimSpace(value) == "" {
-			f.Errors.Add(field, "This field cannot be blank")
+			f.Errors.Add(field, fmt.Sprintf("%s cannot be blank", field))
 		}
 	}
 }

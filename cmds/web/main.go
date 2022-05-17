@@ -15,6 +15,10 @@ import (
 	"time"
 )
 
+type contextkey string
+
+var contextKeyUser = contextkey("user")
+
 type application struct {
 	infoLog       *log.Logger
 	errorLog      *log.Logger

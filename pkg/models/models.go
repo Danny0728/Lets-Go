@@ -22,6 +22,6 @@ type User struct {
 	ID             int
 	Name           string
 	Email          string
-	hashedPassword []byte
-	created        time.Time
+	HashedPassword []byte
+	Created        time.Time
 }

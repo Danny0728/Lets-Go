@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/justinas/nosurf"
+	"github.com/yash/snippetbox/pkg/models"
 	"net/http"
 	"runtime/debug"
 	"time"
@@ -48,7 +49,11 @@ func (app *application) addDefaultData(td *templateData, r *http.Request) *templ
 	return td
 }
 
-func (app *application) authenticatedUser(r *http.Request) int {
-	//returns 0 if user is not authenticated
-	return app.session.GetInt(r, "userID")
+func (app *application) authenticatedUser(r *http.Request) *models.User {
+	user, ok := r.Context().Value(contextKeyUser).(*models.User)
+	if !ok {
+		return nil
+	}
+
+	return user
 }

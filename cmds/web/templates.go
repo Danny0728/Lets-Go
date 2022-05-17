@@ -14,7 +14,7 @@ import (
 // to it as the build progresses.
 
 type templateData struct {
-	AuthenticatedUser int
+	AuthenticatedUser *models.User
 	CurrentYear       int
 	Flash             string
 	CSRFToken         string
